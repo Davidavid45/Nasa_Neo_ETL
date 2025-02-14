@@ -58,6 +58,7 @@ Feed API. We use an end-to-end pipeline:
   - Tableau loads this CSV for easy Mac usage.
 
 **4. TABLEAU DASHBOARD**
+Tableau Link: https://public.tableau.com/app/profile/oluwasegun.adegoke/viz/Near-EarthAsteroids_17395688260880/Near-EarthAsteroidsCloseApproachesPotentialHazards
 
 - **Headline KPIs**: 
   - Total Objects
@@ -99,7 +100,7 @@ This project demonstrates an **end-to-end** data pipeline:
 
 - [NASA NEO API](https://api.nasa.gov/)  
 - [Azure SQL](https://azure.microsoft.com/en-us/services/sql-database/)  
-- [Tableau](https://www.tableau.com/)  
+- [Tableau]([https://www.tableau.com/](https://public.tableau.com/app/profile/oluwasegun.adegoke/viz/Near-EarthAsteroids_17395688260880/Near-EarthAsteroidsCloseApproachesPotentialHazards))  
 - [Python `pymssql`](https://pymssql.readthedocs.io/)
 
 **Author**: Oluwasegun Adegoke  
