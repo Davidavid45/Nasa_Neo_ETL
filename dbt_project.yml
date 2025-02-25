@@ -1,0 +1,9 @@
+name: "neo_asteroids_project"
+version: "1.0"
+config-version: 2
+
+profile: "neo_asteroids_profile"
+
+model-paths: ["models"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
