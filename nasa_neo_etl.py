@@ -7,7 +7,6 @@ transforms the data, and loads it into an Azure SQL database.
 
 
 # 1. INSTALL LIBRARIES (via terminal/command line):
-#    pip install requests sqlalchemy pyodbc
 
 import requests
 import datetime
@@ -26,42 +25,34 @@ SERVER   = "dattaserver.database.windows.net"
 DATABASE = "Neodb"
 driver_path = "/opt/homebrew/lib/libmsodbcsql.18.dylib"
 
-# Build the connection string for SQLAlchemy
 connection_string = (
     f"mssql+pyodbc://{USERNAME}:{PASSWORD}@{SERVER}:1433/"
     f"{DATABASE}?driver={driver_path}&Encrypt=yes&TrustServerCertificate=no"
 )
 
-# Create the engine
 engine = create_engine(connection_string, fast_executemany=True)
 
 def main():
     try:
-        # 4. CREATE TABLE IF NOT EXISTS
         create_table_if_not_exists()
 
-        # 5. DETERMINE THE DATE RANGE (LAST 7 DAYS)
         end_date = datetime.date.today()
         start_date = end_date - datetime.timedelta(days=7)
 
-        # 6. BUILD NASA API URL
         url = (
             f"https://api.nasa.gov/neo/rest/v1/feed?"
             f"start_date={start_date}&end_date={end_date}&api_key={NASA_API_KEY}"
         )
 
-        # 7. REQUEST DATA
         response = requests.get(url)
         response.raise_for_status()
         data = response.json()
 
-        # 8. PARSE AND TRANSFORM DATA INTO A PANDAS DATAFRAME
         df_neo = parse_neo_data(data)
 
         if df_neo.empty:
             print("No new NEO data found.")
         else:
-            # 9. UPSERT / INSERT INTO AZURE SQL
             load_data_to_sql(df_neo)
             print(f"Inserted/updated {len(df_neo)} rows into NEO_Data table.")
     
@@ -100,7 +91,6 @@ def parse_neo_data(data_json):
     Takes the JSON from NASA's NEO API and returns a Pandas DataFrame
     with the relevant fields.
     """
-    # The NEO data is nested under: near_earth_objects -> dates -> list of objects
     near_earth_objects = data_json.get("near_earth_objects", {})
 
     records = []
@@ -111,7 +101,6 @@ def parse_neo_data(data_json):
             close_approach = neo.get("close_approach_data", [])
             
           
-            # Some NEOs have multiple future approach dates, but for simplicity we handle one.
             if len(close_approach) > 0:
                 approach_data = close_approach[0]
                 close_approach_date = approach_data.get("close_approach_date", date_str)
@@ -162,16 +151,11 @@ def load_data_to_sql(df):
     If there's a conflict on PRIMARY KEY, we skip or update existing records.
     For demonstration, I'll do a simple 'try insert, if fails on PK, ignore'.
     """
-    # So for upsert logic, i might need a custom approach. 
-    # But let's do a simple 'append' and rely on the PK constraint to skip duplicates.
 
-    # Using the 'if_exists="append"' approach, but any PK violations will raise an error.
-    # I'll wrap that in a try/except to continue.
 
     try:
         df.to_sql("NEO_Data", con=engine, schema="dbo", if_exists="append", index=False)
     except Exception as exc:
-        # If the error is caused by PK constraint violation, we can ignore or handle individually.
         print("Bulk insert encountered duplicates. Attempting row-by-row insertion.")
         insert_row_by_row(df)
 
@@ -194,11 +178,9 @@ def insert_row_by_row(df):
             try:
                 conn.execute(insert_sql, **row.to_dict())
             except Exception as row_exc:
-                # If it’s a primary key violation, we can ignore
                 if "PRIMARY KEY" in str(row_exc):
                     pass
                 else:
-                    # Some other error, raise or print
                     print(f"Row insert error: {row_exc}")
 
 def backfill_historical_data():
@@ -209,11 +191,9 @@ def backfill_historical_data():
     import datetime
     import time
 
-    # Choose how far back you want to go, e.g., Jan 1, 2021, up to yesterday
     start_date = datetime.date(2019, 1, 1)
     end_date = datetime.date.today() - datetime.timedelta(days=1)
 
-    # NASA feed endpoint only allows up to 7-day windows
     chunk_size = 7
 
     current = start_date
@@ -234,7 +214,6 @@ def backfill_historical_data():
         response.raise_for_status()
         data = response.json()
 
-        # Parse and insert using your existing functions
         df_neo = parse_neo_data(data)
         if not df_neo.empty:
             load_data_to_sql(df_neo)
@@ -242,10 +221,8 @@ def backfill_historical_data():
         else:
             print(f"No data found for {chunk_start} to {chunk_end}.\n")
 
-        # Move current date forward by chunk_size
         current = chunk_end + datetime.timedelta(days=1)
 
-        # Optional short sleep to avoid spamming the API
         time.sleep(1)
 
     print("Historical data load complete!")
